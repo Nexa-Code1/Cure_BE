@@ -1,7 +1,21 @@
 import { Router } from "express";
-import { register } from "./Services/auth.service.js";
+import {
+  register,
+  login,
+  forgetPassword,
+  resetPassword,
+  updatePassword
+} from "./Services/auth.service.js";
+import { authenticationMiddleware } from "../../Middlewares/authentication-middleware.js";
+import { errorHandlerMiddleware } from "../../Middlewares/error-handler-middleware.js";
 
-export const userRouter = Router();
+const userRouter = Router();
 
-userRouter.post('/register', register);
+// Auth routes
+userRouter.post("/register", register);
+userRouter.post("/login", login);
+userRouter.post("/forget-password", forgetPassword);
+userRouter.post("/reset-password", resetPassword);
+userRouter.post("/update-password", authenticationMiddleware, updatePassword);
 
+export default userRouter;

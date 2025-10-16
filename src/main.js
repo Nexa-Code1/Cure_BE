@@ -1,15 +1,17 @@
 import connection from "./DB/connection.js";
 import express from "express";
-import { userRouter } from "./Modules/Auth/auth.controller.js";
+import routerHandler from "./Utils/router-handler.js";
+
 const app = express();
+import dotenv from "dotenv";
+dotenv.config();
 
 
 const bootstrap = async () => {
     await connection();
     app.use(express.json());
 
-    app.use('/api', userRouter);
-
+    routerHandler(app);
 
     app.listen(3000, () => {
         console.log('Server is running on port 3000');
