@@ -2,7 +2,7 @@ import connection from "./DB/connection.js";
 import express from "express";
 import routerHandler from "./Utils/router-handler.js";
 
-const app = express();
+export const app = express();
 import dotenv from "dotenv";
 dotenv.config();
 
