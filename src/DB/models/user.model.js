@@ -1,7 +1,15 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../connection.js";
 import bcrypt from "bcrypt";
-class UserModel extends Model {}
+class UserModel extends Model {
+  toJSON() {
+    const values = { ...this.get() };
+    delete values.password;
+    delete values.otp_code;
+    delete values.otp_expires_at;
+    return values;
+  }
+}
 
 UserModel.init(
   {
@@ -65,6 +73,10 @@ UserModel.init(
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
+
+    defaultScope: {
+      attributes: { exclude: ["password", "otp_code", "otp_expires_at"] },
+    },
   }
 );
 

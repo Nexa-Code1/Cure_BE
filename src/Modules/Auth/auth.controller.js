@@ -4,18 +4,14 @@ import {
   login,
   forgetPassword,
   resetPassword,
-  updatePassword
 } from "./Services/auth.service.js";
-import { authenticationMiddleware } from "../../Middlewares/authentication-middleware.js";
-import { errorHandlerMiddleware } from "../../Middlewares/error-handler-middleware.js";
 
-const userRouter = Router();
+const authRouter = Router();
 
 // Auth routes
-userRouter.post("/register", register);
-userRouter.post("/login", login);
-userRouter.post("/forget-password", forgetPassword);
-userRouter.post("/reset-password", resetPassword);
-userRouter.post("/update-password", authenticationMiddleware, updatePassword);
+authRouter.post("/register", register);
+authRouter.post("/login", login);
+authRouter.post("/forget-password", forgetPassword);
+authRouter.post("/reset-password", resetPassword);
 
-export default userRouter;
+export default authRouter;
