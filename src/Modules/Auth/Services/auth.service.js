@@ -7,26 +7,12 @@ import { Op } from "sequelize";
 
 export const register = async (req, res) => {
   try {
-    const {
-      fullname,
-      email,
-      password,
-      phone,
-      date_of_birth,
-      gender,
-      image,
-      address,
-    } = req.body;
+    const { fullname, email, password } = req.body;
 
     const missingFields = [];
     if (!fullname) missingFields.push("Fullname");
     if (!email) missingFields.push("Email");
     if (!password) missingFields.push("Password");
-    if (!phone) missingFields.push("Phone");
-    if (!date_of_birth) missingFields.push("Date of birth");
-    if (!gender) missingFields.push("Gender");
-    if (!image) missingFields.push("Image");
-    if (!address) missingFields.push("Address");
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -47,11 +33,11 @@ export const register = async (req, res) => {
       fullname,
       email,
       password,
-      phone,
-      date_of_birth,
-      gender,
-      image,
-      address,
+      phone: "",
+      date_of_birth: "",
+      gender: "male",
+      image: "",
+      address: "",
     });
 
     return res.status(201).json({
@@ -108,11 +94,11 @@ export const login = async (req, res) => {
   }
 };
 
-export const forgetPassword = async (req, res) => {
+export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = UserModel.unscoped().findOne({ where: { email } });
+    const user = await UserModel.unscoped().findOne({ where: { email } });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -141,9 +127,32 @@ export const forgetPassword = async (req, res) => {
   }
 };
 
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await UserModel.unscoped().findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isOtpValid = compareSync(otp, user.otp_code);
+    if (!isOtpValid) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    return res.status(200).json({
+      message: "OTP verified successfully",
+    });
+  } catch (error) {
+    console.error("Verify OTP Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const resetPassword = async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body;
+    const { email, otp, newPassword, confirmPassword } = req.body;
 
     const user = await UserModel.unscoped().findOne({
       where: {
@@ -159,6 +168,10 @@ export const resetPassword = async (req, res) => {
     const isOtpValid = compareSync(otp, user.otp_code);
     if (!isOtpValid) {
       return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     await user.update({
