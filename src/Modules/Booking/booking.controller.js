@@ -4,12 +4,18 @@ import {
   getMyBookings,
   cancelReserve,
   reserveDoctor,
+  completeBooking,
 } from "./Services/booking.service.js";
 
 const bookingRouter = Router();
 
 bookingRouter.get("/my-bookings", authenticationMiddleware, getMyBookings);
 bookingRouter.post("/book-doctor/:id", authenticationMiddleware, reserveDoctor);
+bookingRouter.put(
+  "/complete-booking/:id",
+  authenticationMiddleware,
+  completeBooking
+);
 bookingRouter.delete(
   "/cancel-doctor/:id",
   authenticationMiddleware,

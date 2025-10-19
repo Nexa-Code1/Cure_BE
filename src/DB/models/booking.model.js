@@ -20,6 +20,11 @@ BookingModel.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    status: {
+      type: DataTypes.ENUM("upcoming", "completed", "cancelled"),
+      allowNull: false,
+      defaultValue: "upcoming",
+    },
   },
   {
     sequelize,

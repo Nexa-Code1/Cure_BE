@@ -95,6 +95,7 @@ export const reserveDoctor = async (req, res) => {
       doctor_id: doctor.id,
       day,
       slot,
+      status: "upcoming",
     });
 
     sendEmail.emit("SendEmail", {
@@ -110,6 +111,30 @@ export const reserveDoctor = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Failed to reserve slot",
+      error: error.message,
+    });
+  }
+};
+
+export const completeBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await BookingModel.findOne({ where: { id } });
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    booking.status = "completed";
+    await booking.save();
+
+    res.status(200).json({
+      message: "Booking completed successfully",
+      booking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to complete booking",
       error: error.message,
     });
   }
@@ -161,7 +186,8 @@ export const cancelReserve = async (req, res) => {
     doctor.available_slots = availableSlots;
     await doctor.save();
 
-    await booking.destroy();
+    booking.status = "cancelled";
+    await booking.save();
 
     sendEmail.emit("SendEmail", {
       to: doctor.email,
