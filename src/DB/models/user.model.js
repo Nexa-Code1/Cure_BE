@@ -1,7 +1,15 @@
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../connection.js";
 import bcrypt from "bcrypt";
-class UserModel extends Model {}
+class UserModel extends Model {
+    toJSON() {
+        const values = { ...this.get() };
+        delete values.password;
+        delete values.otp_code;
+        delete values.otp_expires_at;
+        return values;
+    }
+}
 
 UserModel.init(
     {
@@ -26,18 +34,18 @@ UserModel.init(
         },
         phone: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         date_of_birth: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         gender: {
             type: DataTypes.ENUM("male", "female"),
-            allowNull: false,
+            allowNull: true,
             validate: {
                 isIn: {
-                    args: [["male", "female", ""]],
+                    args: [["male", "female"]],
                     msg: 'Gender must be either "male" or "female"',
                 },
             },
@@ -48,7 +56,7 @@ UserModel.init(
         },
         address: {
             type: DataTypes.JSON,
-            allowNull: false,
+            allowNull: true,
         },
         otp_code: {
             type: DataTypes.STRING,
@@ -65,6 +73,10 @@ UserModel.init(
         timestamps: true,
         createdAt: "created_at",
         updatedAt: "updated_at",
+
+        defaultScope: {
+            attributes: { exclude: ["password", "otp_code", "otp_expires_at"] },
+        },
     }
 );
 
