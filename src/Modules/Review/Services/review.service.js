@@ -19,6 +19,7 @@ export const addReview = async (req, res) => {
       rate,
       comment,
       doctor_id: Number(id),
+      user_id: req.user.id,
     });
 
     // Recalculate average rate

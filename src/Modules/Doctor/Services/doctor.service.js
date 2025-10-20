@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import DoctorModel from "../../../DB/models/doctor.model.js";
 import ReviewModel from "../../../DB/models/reviews.model.js";
 import UserModel from "../../../DB/models/user.model.js";
@@ -103,6 +104,7 @@ export const getDoctorById = async (req, res) => {
         {
           model: ReviewModel,
           as: "reviews",
+          attributes: ["id", "rate", "comment", "created_at"],
           include: [
             {
               model: UserModel,
@@ -158,6 +160,52 @@ export const getDoctorBySpecialty = async (req, res) => {
         "address",
       ],
     });
+    res.status(200).json({
+      message: "Doctors fetched successfully",
+      doctors: doctors.map((doctor) => {
+        const d = doctor.toJSON();
+
+        if (typeof d.address === "string") {
+          try {
+            d.address = JSON.parse(d.address);
+          } catch {
+            d.address = null;
+          }
+        }
+
+        return d;
+      }),
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch doctors",
+      error: error.message,
+    });
+  }
+};
+
+export const getTopRatedDoctors = async (req, res) => {
+  try {
+    const doctors = await DoctorModel.findAll({
+      where: {
+        rate: { [Op.gte]: 3 },
+      },
+      attributes: [
+        "id",
+        "name",
+        "specialty",
+        "start_time",
+        "end_time",
+        "price",
+        "image",
+        "rate",
+        "is_favourite",
+        "address",
+      ],
+    });
+    if (!doctors) {
+      return res.status(404).json({ message: "Doctors not found" });
+    }
     res.status(200).json({
       message: "Doctors fetched successfully",
       doctors: doctors.map((doctor) => {

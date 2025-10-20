@@ -4,6 +4,7 @@ import {
   getDoctors,
   getDoctorById,
   getDoctorBySpecialty,
+  getTopRatedDoctors,
 } from "./Services/doctor.service.js";
 import { authenticationMiddleware } from "../../Middlewares/authentication-middleware.js";
 
@@ -16,6 +17,11 @@ doctorRouter.get(
   "/get-doctor-by-specialty/:specialty",
   authenticationMiddleware,
   getDoctorBySpecialty
+);
+doctorRouter.get(
+  "/get-top-rated-doctors",
+  authenticationMiddleware,
+  getTopRatedDoctors
 );
 
 export default doctorRouter;
