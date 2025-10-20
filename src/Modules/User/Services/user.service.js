@@ -16,12 +16,15 @@ export const getMyProfile = async (req, res) => {
 export const updateMyProfile = async (req, res) => {
   try {
     const { fullname, email, phone, date_of_birth } = req.body;
+    const photo = req.file ? req.file.filename : null;
+
     const [updated] = await UserModel.update(
       {
         fullname,
         email,
         phone,
         date_of_birth,
+        ...(photo && { photo }),
       },
       { where: { id: req.user.id } }
     );
@@ -30,7 +33,9 @@ export const updateMyProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ message: "Profile updated successfully" });
+    res.status(200).json({
+      message: "Profile updated successfully",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
