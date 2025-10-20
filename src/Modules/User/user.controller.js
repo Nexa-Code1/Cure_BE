@@ -17,11 +17,7 @@ userRouter.put(
   upload.single("image"),
   updateMyProfile
 );
-userRouter.patch(
-  "/update-password",
-  authenticationMiddleware,
-  updatePassword
-);
+userRouter.patch("/update-password", authenticationMiddleware, updatePassword);
 userRouter.delete("/delete-profile", authenticationMiddleware, deleteMyProfile);
 
 export default userRouter;
