@@ -33,7 +33,7 @@ UserModel.init(
         );
       },
     },
-    phone: {
+    image: {
       type: DataTypes.STRING,
       allowNull: false,
     },

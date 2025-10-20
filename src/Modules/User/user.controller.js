@@ -11,11 +11,15 @@ import { upload } from "../../Middlewares/upload-middleware.js";
 const userRouter = Router();
 
 userRouter.get("/profile", authenticationMiddleware, getMyProfile);
-userRouter.put("/update-profile", authenticationMiddleware, updateMyProfile);
+userRouter.put(
+  "/update-profile",
+  authenticationMiddleware,
+  upload.single("image"),
+  updateMyProfile
+);
 userRouter.patch(
   "/update-password",
   authenticationMiddleware,
-  upload.single("photo"),
   updatePassword
 );
 userRouter.delete("/delete-profile", authenticationMiddleware, deleteMyProfile);
