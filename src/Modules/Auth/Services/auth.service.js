@@ -4,6 +4,7 @@ import UserModel from "../../../DB/models/user.model.js";
 import { generateOtpEmail } from "../../../Utils/email-template.js";
 import { sendEmail } from "../../../Utils/send-email.js";
 import { Op } from "sequelize";
+import { addTokenToBlacklist } from "../../../Utils/token-blacklist.js";
 
 export const register = async (req, res) => {
     try {
@@ -191,13 +192,15 @@ export const resetPassword = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        return res.status(200).json({
-            message: "User logged out successfully",
-        });
+        const token = req.headers.authorization.split(" ")[1];
+        if (token) {
+            addTokenToBlacklist(token);
+        }
+        return res
+            .status(200)
+            .json({ message: "User logged out successfully" });
     } catch (error) {
-        console.error("Logout error:", error);
-        return res.status(500).json({
-            message: "Internal server error",
-        });
+        console.error("Logout Error:", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 };

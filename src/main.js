@@ -1,17 +1,23 @@
-import connection from "./DB/connection.js";
 import express from "express";
-import cors from "cors";
-import routerHandler from "./Utils/router-handler.js";
-
-const app = express();
 import dotenv from "dotenv";
+import path from "path";
+import connection from "./DB/connection.js";
+import routerHandler from "./Utils/router-handler.js";
+import { fileURLToPath } from "url";
+import cors from "cors";
+
 dotenv.config();
 
-const bootstrap = async () => {
-    await connection();
-    app.use(express.json());
+const app = express();
 
-    // Allow requests from your frontend
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const bootstrap = async () => {
+  await connection();
+  app.use(express.json());
+
+  // Allow requests from your frontend
     app.use(
         cors({
             origin: "*",
@@ -20,13 +26,14 @@ const bootstrap = async () => {
         })
     );
 
-    routerHandler(app);
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-    app.listen(3000, () => {
-        console.log("Server is running on port 3000");
-    }).on("error", (error) => {
-        console.error("Server error:", error);
-    });
+  routerHandler(app);
+
+  const PORT = process.env.PORT || 3000;
+  app
+    .listen(PORT, () => console.log(`Server is running on port ${PORT}`))
+    .on("error", (error) => console.error("Server error:", error));
 };
 
 export default bootstrap;

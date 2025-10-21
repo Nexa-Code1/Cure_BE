@@ -26,6 +26,15 @@ DoctorModel.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    is_favourite: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.getDataValue("is_favourite") || false;
+      },
+      set(value) {
+        this.setDataValue("is_favourite", value);
+      },
+    },
     rate: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -35,11 +44,7 @@ DoctorModel.init(
         max: 5,
       },
     },
-    is_favourite: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    },
+    gender: { type: DataTypes.ENUM("male", "female"), allowNull: false },
   },
   {
     sequelize,

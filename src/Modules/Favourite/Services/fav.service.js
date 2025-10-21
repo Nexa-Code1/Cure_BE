@@ -25,10 +25,26 @@ export const getFavourite = async (req, res) => {
     });
 
     const doctors = favourites.map((fav) => fav.doctor);
-    const formattedDoctors = doctors.map((doctor) => ({
-      ...doctor.dataValues,
-      address: JSON.parse(doctor.address || "{}"),
-    }));
+    const formattedDoctors = doctors.map((doctor) => {
+      let parsedAddress = null;
+      if (typeof doctor.address === "string") {
+        try {
+          parsedAddress = JSON.parse(doctor.address);
+        } catch {
+          parsedAddress = doctor.address;
+        }
+      } else if (
+        typeof doctor.address === "object" &&
+        doctor.address !== null
+      ) {
+        parsedAddress = doctor.address;
+      }
+
+      return {
+        ...doctor.dataValues,
+        address: parsedAddress,
+      };
+    });
 
     res.status(200).json(formattedDoctors);
   } catch (error) {
@@ -46,23 +62,17 @@ export const addFavourite = async (req, res) => {
       return res.status(400).json({ message: "Doctor ID is required" });
     }
 
-    // Check if doctor exists
     const doctor = await DoctorModel.findByPk(doctor_id);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
 
-    // Check if already in favourites
     const existing = await FavModel.findOne({ where: { user_id, doctor_id } });
     if (existing) {
       return res.status(400).json({ message: "Doctor already in favourites" });
     }
 
     await FavModel.create({ user_id, doctor_id });
-    await DoctorModel.update(
-      { is_favourite: true },
-      { where: { id: doctor_id } }
-    );
     res.status(201).json({ message: "Added to favourites" });
   } catch (error) {
     res
@@ -85,10 +95,6 @@ export const deleteFavourite = async (req, res) => {
     }
 
     await fav.destroy();
-    await DoctorModel.update(
-      { is_favourite: false },
-      { where: { id: doctor_id } }
-    );
     res.status(200).json({ message: "Removed from favourites" });
   } catch (error) {
     res
