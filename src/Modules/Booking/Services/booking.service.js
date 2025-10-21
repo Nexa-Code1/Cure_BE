@@ -166,6 +166,12 @@ export const cancelReserve = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
+    if (booking.status === "completed") {
+      return res
+        .status(400)
+        .json({ message: "Booking is already completed, you can't cancel it" });
+    }
+
     const doctor = await DoctorModel.findOne({
       where: { id: booking.doctor_id },
     });

@@ -98,10 +98,15 @@ export const getDoctors = async (req, res) => {
       sort = "",
       gender,
       available,
+      specialty,
     } = req.query;
 
     const availableDays = available
       ? available.split(",").map((d) => d.trim())
+      : [];
+
+    const specialities = specialty
+      ? specialty.split(",").map((d) => d.trim())
       : [];
 
     const today = new Date();
@@ -114,6 +119,8 @@ export const getDoctors = async (req, res) => {
     const whereConditions = {};
     if (doctorName) whereConditions.name = { [Op.like]: `%${doctorName}%` };
     if (gender) whereConditions.gender = gender;
+    if (specialities.length > 0)
+      whereConditions.specialty = { [Op.in]: specialities };
 
     if (availableDays.length > 0) {
       const jsonConditions = availableDays.map((day) => {
@@ -208,40 +215,6 @@ export const getDoctorById = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to fetch doctor", error: error.message });
-  }
-};
-
-export const getDoctorBySpecialty = async (req, res) => {
-  try {
-    const { specialty } = req.params;
-    if (!specialty)
-      return res.status(400).json({ message: "Specialty is required" });
-
-    const doctors = await DoctorModel.findAll({
-      where: { specialty },
-      attributes: [
-        "id",
-        "name",
-        "specialty",
-        "start_time",
-        "end_time",
-        "price",
-        "image",
-        "rate",
-        "address",
-      ],
-    });
-
-    const formattedDoctors = await attachFavourites(doctors, req.user?.id);
-
-    res.status(200).json({
-      message: "Doctors fetched successfully",
-      doctors: formattedDoctors,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch doctors", error: error.message });
   }
 };
 
