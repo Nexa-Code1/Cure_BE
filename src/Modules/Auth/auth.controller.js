@@ -5,6 +5,7 @@ import {
   resetPassword,
   sendOtp,
   verifyOtp,
+  logout,
 } from "./Services/auth.service.js";
 
 const authRouter = Router();
@@ -15,5 +16,6 @@ authRouter.post("/login", login);
 authRouter.post("/send-otp", sendOtp);
 authRouter.post("/verify-otp", verifyOtp);
 authRouter.post("/reset-password", resetPassword);
+authRouter.post("/logout", logout);
 
 export default authRouter;

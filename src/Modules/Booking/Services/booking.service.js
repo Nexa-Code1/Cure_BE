@@ -21,13 +21,30 @@ export const getMyBookings = async (req, res) => {
       ],
     });
 
-    const formattedBookings = bookings.map((booking) => ({
-      ...booking.dataValues,
-      doctor: {
-        ...booking.doctor.dataValues,
-        address: JSON.parse(booking.doctor.address || "{}"),
-      },
-    }));
+    const formattedBookings = bookings.map((booking) => {
+      let address = null;
+
+      if (typeof booking.doctor.address === "string") {
+        try {
+          address = JSON.parse(booking.doctor.address);
+        } catch {
+          address = null;
+        }
+      } else if (
+        typeof booking.doctor.address === "object" &&
+        booking.doctor.address !== null
+      ) {
+        address = booking.doctor.address;
+      }
+
+      return {
+        ...booking.dataValues,
+        doctor: {
+          ...booking.doctor.dataValues,
+          address,
+        },
+      };
+    });
 
     res.status(200).json({
       message: "Bookings fetched successfully",
