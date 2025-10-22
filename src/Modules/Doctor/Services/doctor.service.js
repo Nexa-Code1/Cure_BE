@@ -144,7 +144,7 @@ export const getDoctors = async (req, res) => {
     else if (sort === "price_desc") order = [["price", "DESC"]];
     else if (sort === "recommend") order = [["rate", "DESC"]];
 
-    const doctors = await DoctorModel.findAll({
+    const { rows: doctors, count } = await DoctorModel.findAndCountAll({
       attributes: [
         "id",
         "name",
@@ -171,6 +171,7 @@ export const getDoctors = async (req, res) => {
 
     res.status(200).json({
       message: "Doctors fetched successfully",
+      count,
       doctors: formattedDoctors,
     });
   } catch (error) {
