@@ -1,10 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
-import path from "path";
 import cors from "cors";
-import connection from "./DB/connection.js";
-import routerHandler from "./Utils/router-handler.js";
+import path from "path";
 import { fileURLToPath } from "url";
+import connection from "../src/DB/connection.js";
+import routerHandler from "../src/Utils/router-handler.js";
+import { globalErrorHandler } from "../src/Middlewares/error-handler-middleware.js";
 
 dotenv.config();
 
@@ -13,8 +14,8 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-await connection();
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "../src/uploads")));
 
 app.use(
   cors({
@@ -27,7 +28,9 @@ app.use(
   })
 );
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 routerHandler(app);
+app.use(globalErrorHandler);
+
+await connection();
 
 export default app;
