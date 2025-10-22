@@ -18,6 +18,7 @@ export const updateMyProfile = async (req, res) => {
   try {
     const { fullname, email, phone, date_of_birth } = req.body;
     const userImage = req.file;
+    console.log(userImage);
 
     const [updated] = await UserModel.update(
       {
@@ -25,7 +26,7 @@ export const updateMyProfile = async (req, res) => {
         email,
         phone,
         date_of_birth,
-        image: `${BASE_URL}/${userImage.filename}`,
+        image: `${BASE_URL}/uploads/${userImage.filename}`,
       },
       { where: { id: req.user.id } }
     );
