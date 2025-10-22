@@ -15,8 +15,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "../src/uploads")));
-
 app.use(
   cors({
     origin: [
@@ -28,7 +26,10 @@ app.use(
   })
 );
 
+app.use("/uploads", express.static(path.join(__dirname, "../src/uploads")));
+
 routerHandler(app);
+
 app.use(globalErrorHandler);
 
 await connection();
