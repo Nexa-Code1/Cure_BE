@@ -9,7 +9,7 @@
     "dev": "nodemon api/server.js"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
