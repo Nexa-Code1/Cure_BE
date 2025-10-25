@@ -5,7 +5,6 @@ import cors from "cors";
 import connection from "./DB/connection.js";
 import routerHandler from "./Utils/router-handler.js";
 import { fileURLToPath } from "url";
-import cors from "cors";
 
 dotenv.config();
 

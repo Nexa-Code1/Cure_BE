@@ -53,7 +53,7 @@ UserModel.init(
         },
         address: {
             type: DataTypes.JSON,
-            allowNull: false,
+            allowNull: true,
         },
         /* ============== FOR STRIPE ============== */
         customer_id: {

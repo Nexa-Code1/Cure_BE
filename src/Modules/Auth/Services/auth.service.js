@@ -44,7 +44,7 @@ export const register = async (req, res) => {
             date_of_birth: "",
             gender: null,
             image: "",
-            address: "",
+            address: null,
             customer_id: customer.id,
         });
 
