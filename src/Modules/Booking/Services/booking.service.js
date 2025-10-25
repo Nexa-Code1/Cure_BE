@@ -66,6 +66,7 @@ export const getMyBookings = async (req, res) => {
 export const bookingIntent = async (req, res) => {
     try {
         const { id } = req.params;
+        const { options } = req.body;
 
         const doctor = await DoctorModel.findOne({ where: { id } });
         if (!doctor) {
@@ -73,19 +74,11 @@ export const bookingIntent = async (req, res) => {
         }
 
         // CREATING PAYMENTINTENT FROM STRIPE
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(doctor.price * 100),
-            currency: "egp",
-            automatic_payment_methods: {
-                enabled: true,
-            },
-        });
+        const paymentIntent = await stripe.paymentIntents.create(options);
 
         res.status(200).json({
             message: "client secret created successfully",
-            bookingIntent: {
-                client_secret: paymentIntent.client_secret,
-            },
+            paymentIntent,
         });
     } catch (error) {
         res.status(500).json({
