@@ -16,6 +16,10 @@ const routerHandler = (app) => {
     app.use("/api/booking", bookingRouter);
     app.use("/api/specialists", specialistsRouter);
 
+    app.use("/", (req, res) => {
+        res.status(200).json({ message: "Welcome to Cure API" });
+    });
+
     app.use(globalErrorHandler);
 };
 
