@@ -160,3 +160,76 @@ export const cancelBookingEmail = (user, date, time) => `
 </body>
 </html>
 `;
+export const refundConfirmationEmail = (
+    user,
+    amount,
+    currency,
+    refundId,
+    paymentIntentId
+) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cure - Refund Confirmation</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f4f7;
+    margin: 0;
+    padding: 30px;
+  }
+  .card {
+    max-width: 480px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+    padding: 30px 20px;
+  }
+  .header-img {
+    width: 100px;
+    margin-bottom: 15px;
+  }
+  .btn {
+    display: inline-block;
+    background-color: #4caf50;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  p {
+    color: #555;
+    line-height: 1.6;
+  }
+  h2 {
+    color: #4caf50;
+  }
+  .footer {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #999;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img src="https://cdn-icons-png.flaticon.com/512/845/845646.png" alt="Refund Icon" class="header-img" />
+    <h2>Refund Processed Successfully</h2>
+    <p>Dear <strong>${user}</strong>,</p>
+    <p>Your refund has been successfully processed.</p>
+    <p><strong>Amount Refunded:</strong> ${(amount / 100).toFixed(
+        2
+    )} ${currency}</p>
+    <p><strong>Refund ID:</strong> ${refundId}</p>
+    <p><strong>Payment Intent:</strong> ${paymentIntentId}</p>
+    <p>Thank you for your patience. Please allow 5–10 business days for the amount to appear in your account.</p>
+  </div>
+</body>
+</html>
+`;

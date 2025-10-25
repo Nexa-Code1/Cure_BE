@@ -8,15 +8,15 @@ import userRouter from "../Modules/User/user.controller.js";
 import specialistsRouter from "../Modules/Specialists/specialists.controller.js";
 
 const routerHandler = (app) => {
-  app.use("/api/auth", authRouter);
-  app.use("/api/user", userRouter);
-  app.use("/api/doctor", doctorRouter);
-  app.use("/api/review", reviewRouter);
-  app.use("/api/favourite", favRouter);
-  app.use("/api/booking", bookingRouter);
-  app.use("/api/specialists", specialistsRouter);
+    app.use("/api/auth", authRouter);
+    app.use("/api/user", userRouter);
+    app.use("/api/doctor", doctorRouter);
+    app.use("/api/review", reviewRouter);
+    app.use("/api/favourite", favRouter);
+    app.use("/api/booking", bookingRouter);
+    app.use("/api/specialists", specialistsRouter);
 
-  app.use(globalErrorHandler);
+    app.use(globalErrorHandler);
 };
 
 export default routerHandler;

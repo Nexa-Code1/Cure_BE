@@ -1,10 +1,15 @@
+import s from "stripe";
+
 import BookingModel from "../../../DB/models/booking.model.js";
 import DoctorModel from "../../../DB/models/doctor.model.js";
 import { sendEmail } from "./../../../Utils/send-email.js";
 import {
     cancelBookingEmail,
     bookingEmail,
+    refundConfirmationEmail,
 } from "./../../../Utils/email-template.js";
+
+const stripe = s(process.env.STRIPE_SECRET_KEY);
 
 export const getMyBookings = async (req, res) => {
     try {
@@ -58,11 +63,48 @@ export const getMyBookings = async (req, res) => {
     }
 };
 
+export const bookingIntent = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const doctor = await DoctorModel.findOne({ where: { id } });
+        if (!doctor) {
+            return res.status(404).json({ message: "Doctor not found" });
+        }
+
+        // CREATING PAYMENTINTENT FROM STRIPE
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(doctor.price * 100),
+            currency: "egp",
+            automatic_payment_methods: {
+                enabled: true,
+            },
+        });
+
+        res.status(200).json({
+            message: "client secret created successfully",
+            bookingIntent: {
+                client_secret: paymentIntent.client_secret,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to create payment intent",
+            error: error.message,
+        });
+    }
+};
+
 export const reserveDoctor = async (req, res) => {
     try {
         const { id } = req.params;
-        const { day, slot } = req.body;
+        const { day, slot, paymentIntent } = req.body;
         const user = req.user;
+
+        if (!paymentIntent)
+            return res
+                .status(404)
+                .json({ message: "paymentIntent is required" });
 
         const doctor = await DoctorModel.findOne({ where: { id } });
         if (!doctor) {
@@ -113,6 +155,7 @@ export const reserveDoctor = async (req, res) => {
             day,
             slot,
             status: "upcoming",
+            payment_intent: paymentIntent,
         });
 
         sendEmail.emit("SendEmail", {
@@ -166,12 +209,36 @@ export const cancelReserve = async (req, res) => {
             return res.status(404).json({ message: "Booking not found" });
         }
 
+        if (booking.status === "completed") {
+            return res.status(400).json({
+                message: "Booking is already completed, you can't cancel it",
+            });
+        }
+
         const doctor = await DoctorModel.findOne({
             where: { id: booking.doctor_id },
         });
         if (!doctor) {
             return res.status(404).json({ message: "Doctor not found" });
         }
+
+        // STRIPE REFUND
+        const refund = await stripe.refunds.create({
+            payment_intent: booking.payment_intent,
+        });
+
+        // SEND EMAIL TO THE CUSTOMER WITH REFUND INFO
+        console.log(req.user);
+        sendEmail.emit("SendEmail", {
+            to: req.user.email,
+            subject: "Cure - Refund Confirmation",
+            html: refundConfirmationEmail(
+                req.user.fullname,
+                refund.amount,
+                refund.currency,
+                refund.id
+            ),
+        });
 
         let availableSlots = doctor.available_slots;
         if (typeof availableSlots === "string") {

@@ -5,6 +5,9 @@ import { generateOtpEmail } from "../../../Utils/email-template.js";
 import { sendEmail } from "../../../Utils/send-email.js";
 import { Op } from "sequelize";
 import { addTokenToBlacklist } from "../../../Utils/token-blacklist.js";
+import s from "stripe";
+
+const stripe = s(process.env.STRIPE_SECRET_KEY);
 
 export const register = async (req, res) => {
     try {
@@ -30,15 +33,19 @@ export const register = async (req, res) => {
             });
         }
 
+        // CREATING A CUSTOMER IN STRIPE FOR SAVING PAYMENT METHOD
+        const customer = await stripe.customers.create({ email });
+
         await UserModel.create({
             fullname,
             email,
             password,
             phone: "",
             date_of_birth: "",
-            gender: "male",
+            gender: null,
             image: "",
             address: "",
+            customer_id: customer.id,
         });
 
         return res.status(201).json({
