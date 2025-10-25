@@ -133,25 +133,45 @@ export const createSetupIntent = async (req, res) => {
 
 export const addPaymentMethod = async (req, res) => {
     try {
-        const { stripe_payment_method_id } = req.body;
+        const { pm_id } = req.body;
+        const user = req.user;
 
-        // Parse stripe_payment_methods_ids if it's a string
-        let stripe_payment_methods_ids = req.user.stripe_payment_methods_ids;
-        if (typeof stripe_payment_methods_ids === "string") {
-            stripe_payment_methods_ids = JSON.parse(stripe_payment_methods_ids);
+        const paymentMethod = await stripe.paymentMethods.attach(pm_id, {
+            customer: user.customer_id,
+        });
+
+        const fingerprint = paymentMethod.card?.fingerprint;
+        if (!fingerprint)
+            return res.status(404).json({ message: "fingerprint not found" });
+
+        // Parse stripe_payment_methods if it's a string
+        let stripe_payment_methods = user.stripe_payment_methods;
+        if (typeof stripe_payment_methods === "string") {
+            stripe_payment_methods = JSON.parse(stripe_payment_methods);
         }
 
-        const newPaymentMethodsIds = !stripe_payment_methods_ids
-            ? [stripe_payment_method_id]
-            : [...stripe_payment_methods_ids, stripe_payment_method_id];
-
-        const [updated] = await UserModel.update(
-            {
-                stripe_payment_methods_ids: newPaymentMethodsIds,
-            },
-            { where: { id: req.user.id } }
+        // Check if fingerprint is already exist
+        const existingFingerpring = stripe_payment_methods.findIndex(
+            (method) => method.fingerprint === fingerprint
         );
 
+        if (existingFingerpring !== -1) {
+            await stripe.paymentMethods.detach(pm_id);
+            return res
+                .status(401)
+                .json({ message: "Payment method is already exist" });
+        }
+
+        // Updating stripe_payment_methods in user table
+        const newPaymentMethodsArr = !stripe_payment_methods
+            ? [{ pm_id, fingerprint }]
+            : [...stripe_payment_methods, { pm_id, fingerprint }];
+        const [updated] = await UserModel.update(
+            {
+                stripe_payment_methods: newPaymentMethodsArr,
+            },
+            { where: { id: user.id } }
+        );
         if (!updated) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -166,34 +186,32 @@ export const addPaymentMethod = async (req, res) => {
 
 export const removePaymentMethod = async (req, res) => {
     try {
-        const { stripe_payment_method_id } = req.body;
+        const { pm_id } = req.body;
 
-        const detached = await stripe.paymentMethods.detach(
-            stripe_payment_method_id
-        );
+        const detached = await stripe.paymentMethods.detach(pm_id);
 
-        // Parse stripe_payment_methods_ids if it's a string
-        let stripe_payment_methods_ids = req.user.stripe_payment_methods_ids;
-        if (typeof stripe_payment_methods_ids === "string") {
-            stripe_payment_methods_ids = JSON.parse(stripe_payment_methods_ids);
+        // Parse stripe_payment_methods if it's a string
+        let stripe_payment_methods = req.user.stripe_payment_methods;
+        if (typeof stripe_payment_methods === "string") {
+            stripe_payment_methods = JSON.parse(stripe_payment_methods);
         }
 
         // Find payment method id
-        const paymentMethodId = stripe_payment_methods_ids.find(
-            (id) => id === stripe_payment_method_id
+        const paymentMethodId = stripe_payment_methods.find(
+            (paymentMethod) => paymentMethod.pm_id === pm_id
         );
         if (!paymentMethodId)
             return res
                 .status(404)
                 .json({ message: "Cannot find payment method" });
 
-        const newPaymentMethodsIds = stripe_payment_methods_ids.filter(
-            (id) => id !== paymentMethodId
+        const newPaymentMethodsArr = stripe_payment_methods.filter(
+            (paymentMethod) => paymentMethod.pm_id !== pm_id
         );
 
         const [updated] = await UserModel.update(
             {
-                stripe_payment_methods_ids: newPaymentMethodsIds,
+                stripe_payment_methods: newPaymentMethodsArr,
             },
             { where: { id: req.user.id } }
         );

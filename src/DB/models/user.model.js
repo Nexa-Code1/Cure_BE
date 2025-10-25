@@ -60,10 +60,10 @@ UserModel.init(
             type: DataTypes.STRING,
             allowNull: false,
         },
-        stripe_payment_methods_ids: {
+        stripe_payment_methods: {
             type: DataTypes.JSON,
             allowNull: false,
-            defaultValue: [],
+            defaultValue: [], // [{pm_id: ..., fingerprint: ....}]
         },
         /* ============== FOR STRIPE ============== */
         otp_code: {
