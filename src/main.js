@@ -15,7 +15,6 @@ const __dirname = path.dirname(__filename);
 
 const bootstrap = async () => {
   await connection();
-  app.use(express.json());
 
   app.use(
     cors({
@@ -28,6 +27,7 @@ const bootstrap = async () => {
     })
   );
 
+  app.use(express.json());
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
   routerHandler(app);
