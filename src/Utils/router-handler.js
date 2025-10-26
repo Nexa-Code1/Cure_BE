@@ -6,6 +6,7 @@ import favRouter from "../Modules/Favourite/fav.controller.js";
 import bookingRouter from "../Modules/Booking/booking.controller.js";
 import userRouter from "../Modules/User/user.controller.js";
 import specialistsRouter from "../Modules/Specialists/specialists.controller.js";
+import paymentRouter from "../Modules/Payment/payment.controller.js";
 
 const routerHandler = (app) => {
     app.use("/api/auth", authRouter);
@@ -15,6 +16,7 @@ const routerHandler = (app) => {
     app.use("/api/favourite", favRouter);
     app.use("/api/booking", bookingRouter);
     app.use("/api/specialists", specialistsRouter);
+    app.use("/api/payment", paymentRouter);
 
     app.use("/", (req, res) => {
         res.status(200).json({ message: "Welcome to Cure API" });
