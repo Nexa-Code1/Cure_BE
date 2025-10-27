@@ -16,30 +16,34 @@ export const getMyProfile = async (req, res) => {
 export const updateMyProfile = async (req, res) => {
   try {
     const { fullname, email, phone, date_of_birth, address, gender } = req.body;
-    const userImage = req.file.path;
+    const userId = req.user.id;
 
-    const [updated] = await UserModel.update(
-      {
-        fullname,
-        email,
-        phone,
-        date_of_birth,
-        image: userImage,
-        address,
-        gender,
-      },
-      { where: { id: req.user.id } }
-    );
-
-    if (!updated) {
+    const user = await UserModel.findByPk(userId);
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    const updateData = {
+      fullname,
+      email,
+      phone,
+      date_of_birth,
+      address,
+      gender,
+    };
+
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
+
+    await user.update(updateData);
 
     res.status(200).json({
       message: "Profile updated successfully",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Update profile error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
