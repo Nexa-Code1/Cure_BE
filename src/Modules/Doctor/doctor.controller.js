@@ -4,6 +4,7 @@ import {
   getDoctors,
   getDoctorById,
   getTopRatedDoctors,
+  // addDoctorsFromArray,
 } from "./Services/doctor.service.js";
 import { authenticationMiddleware } from "../../Middlewares/authentication-middleware.js";
 import { uploadDoctorImage } from "./../../config/multer.js";
@@ -18,5 +19,6 @@ doctorRouter.get(
   authenticationMiddleware,
   getTopRatedDoctors
 );
+// doctorRouter.post("/add-doctors-from-array", addDoctorsFromArray);
 
 export default doctorRouter;
