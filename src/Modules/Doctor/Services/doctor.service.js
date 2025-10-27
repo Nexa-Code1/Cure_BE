@@ -6,7 +6,7 @@ import FavModel from "../../../DB/models/fav.model.js";
 
 export const addDoctor = async (req, res) => {
   try {
-    const {
+    let {
       name,
       about,
       specialty,
@@ -15,33 +15,40 @@ export const addDoctor = async (req, res) => {
       available_slots,
       address,
       price,
-      image,
       experience,
       email,
       patients,
       gender,
     } = req.body;
 
+    const image = req.file?.path;
+
+    // Check if email already exists
     const isExist = await DoctorModel.findOne({ where: { email } });
     if (isExist) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    let days = available_slots;
-    if (typeof days === "string") {
-      days = JSON.parse(days);
+    // Parse JSON strings (from form-data)
+    if (typeof available_slots === "string") {
+      available_slots = JSON.parse(available_slots);
+    }
+    if (typeof address === "string") {
+      address = JSON.parse(address);
     }
 
-    const today = new Date();
-    for (const item of days) {
+    // Validate slot dates
+    const todayMidnight = new Date().setHours(0, 0, 0, 0);
+    for (const item of available_slots) {
       const dayDate = new Date(item.day);
-      if (dayDate < today.setHours(0, 0, 0, 0)) {
+      if (dayDate < todayMidnight) {
         return res.status(400).json({
           message: `Invalid day: ${item.day} — cannot add past days.`,
         });
       }
     }
 
+    // Create doctor
     const doctor = await DoctorModel.create({
       name,
       about,

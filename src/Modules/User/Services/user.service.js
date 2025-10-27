@@ -14,10 +14,9 @@ export const getMyProfile = async (req, res) => {
 };
 
 export const updateMyProfile = async (req, res) => {
-  const BASE_URL = process.env.BASE_URL;
   try {
     const { fullname, email, phone, date_of_birth, address, gender } = req.body;
-    const userImage = req.file;
+    const userImage = req.file.path;
 
     const [updated] = await UserModel.update(
       {
@@ -25,7 +24,7 @@ export const updateMyProfile = async (req, res) => {
         email,
         phone,
         date_of_birth,
-        image: `${BASE_URL}/${userImage.filename}`,
+        image: userImage,
         address,
         gender,
       },

@@ -6,7 +6,7 @@ import {
   updatePassword,
 } from "./Services/user.service.js";
 import { authenticationMiddleware } from "../../Middlewares/authentication-middleware.js";
-import { upload } from "../../Middlewares/upload-middleware.js";
+import { uploadUserImage } from "./../../config/multer.js";
 
 const userRouter = Router();
 
@@ -14,7 +14,7 @@ userRouter.get("/profile", authenticationMiddleware, getMyProfile);
 userRouter.put(
   "/update-profile",
   authenticationMiddleware,
-  upload.single("image"),
+  uploadUserImage.single("image"),
   updateMyProfile
 );
 userRouter.patch("/update-password", authenticationMiddleware, updatePassword);
