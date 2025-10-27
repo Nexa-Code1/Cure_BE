@@ -5,282 +5,295 @@ import UserModel from "../../../DB/models/user.model.js";
 import FavModel from "../../../DB/models/fav.model.js";
 
 export const addDoctor = async (req, res) => {
-  try {
-    let {
-      name,
-      about,
-      specialty,
-      start_time,
-      end_time,
-      available_slots,
-      address,
-      price,
-      experience,
-      email,
-      patients,
-      gender,
-    } = req.body;
+    try {
+        let {
+            name,
+            about,
+            specialty,
+            start_time,
+            end_time,
+            available_slots,
+            address,
+            price,
+            experience,
+            email,
+            patients,
+            gender,
+        } = req.body;
 
-    const image = req.file?.path;
+        const image = req.file?.path || req.body.image;
 
-    // Check if email already exists
-    const isExist = await DoctorModel.findOne({ where: { email } });
-    if (isExist) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
+        // Check if email already exists
+        const isExist = await DoctorModel.findOne({ where: { email } });
+        if (isExist) {
+            return res.status(400).json({ message: "Email already exists" });
+        }
 
-    // Parse JSON strings (from form-data)
-    if (typeof available_slots === "string") {
-      available_slots = JSON.parse(available_slots);
-    }
-    if (typeof address === "string") {
-      address = JSON.parse(address);
-    }
+        // Parse JSON strings (from form-data)
+        if (typeof available_slots === "string") {
+            available_slots = JSON.parse(available_slots);
+        }
+        if (typeof address === "string") {
+            address = JSON.parse(address);
+        }
 
-    // Validate slot dates
-    const todayMidnight = new Date().setHours(0, 0, 0, 0);
-    for (const item of available_slots) {
-      const dayDate = new Date(item.day);
-      if (dayDate < todayMidnight) {
-        return res.status(400).json({
-          message: `Invalid day: ${item.day} — cannot add past days.`,
+        // Validate slot dates
+        const todayMidnight = new Date().setHours(0, 0, 0, 0);
+        for (const item of available_slots) {
+            const dayDate = new Date(item.day);
+            if (dayDate < todayMidnight) {
+                return res.status(400).json({
+                    message: `Invalid day: ${item.day} — cannot add past days.`,
+                });
+            }
+        }
+
+        // Create doctor
+        const doctor = await DoctorModel.create({
+            name,
+            about,
+            specialty,
+            start_time,
+            end_time,
+            available_slots,
+            address,
+            price,
+            image,
+            experience,
+            email,
+            patients,
+            gender,
         });
-      }
+
+        res.status(201).json({
+            message: "Doctor added successfully",
+            doctor,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to add doctor",
+            error: error.message,
+        });
     }
-
-    // Create doctor
-    const doctor = await DoctorModel.create({
-      name,
-      about,
-      specialty,
-      start_time,
-      end_time,
-      available_slots,
-      address,
-      price,
-      image,
-      experience,
-      email,
-      patients,
-      gender,
-    });
-
-    res.status(201).json({
-      message: "Doctor added successfully",
-      doctor,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to add doctor",
-      error: error.message,
-    });
-  }
 };
 
 const attachFavourites = async (doctors, user_id) => {
-  if (!user_id)
-    return doctors.map((d) => ({ ...d.toJSON(), is_favourite: false }));
+    if (!user_id)
+        return doctors.map((d) => ({ ...d.toJSON(), is_favourite: false }));
 
-  const favs = await FavModel.findAll({
-    where: { user_id },
-    attributes: ["doctor_id"],
-  });
-  const favIds = favs.map((f) => f.doctor_id);
+    const favs = await FavModel.findAll({
+        where: { user_id },
+        attributes: ["doctor_id"],
+    });
+    const favIds = favs.map((f) => f.doctor_id);
 
-  return doctors.map((doctor) => {
-    const d = doctor.toJSON();
-    d.is_favourite = favIds.includes(d.id);
+    return doctors.map((doctor) => {
+        const d = doctor.toJSON();
+        d.is_favourite = favIds.includes(d.id);
 
-    if (typeof d.address === "string") {
-      try {
-        d.address = JSON.parse(d.address);
-      } catch {
-        d.address = null;
-      }
-    }
+        if (typeof d.address === "string") {
+            try {
+                d.address = JSON.parse(d.address);
+            } catch {
+                d.address = null;
+            }
+        }
 
-    if (doctor.available_slots && typeof doctor.available_slots === "string") {
-      try {
-        d.available_slots = JSON.parse(doctor.available_slots);
-      } catch {
-        d.available_slots = [];
-      }
-    }
+        if (
+            doctor.available_slots &&
+            typeof doctor.available_slots === "string"
+        ) {
+            try {
+                d.available_slots = JSON.parse(doctor.available_slots);
+            } catch {
+                d.available_slots = [];
+            }
+        }
 
-    return d;
-  });
+        return d;
+    });
 };
 
 export const getDoctors = async (req, res) => {
-  try {
-    const {
-      limit = 10,
-      offset = 0,
-      doctorName = "",
-      sort = "",
-      gender,
-      available,
-      specialty,
-    } = req.query;
+    try {
+        const {
+            limit = 10,
+            offset = 0,
+            doctorName = "",
+            sort = "",
+            gender,
+            available,
+            specialty,
+        } = req.query;
 
-    const availableDays = available
-      ? available.split(",").map((d) => d.trim())
-      : [];
+        const availableDays = available
+            ? available.split(",").map((d) => d.trim())
+            : [];
 
-    const specialities = specialty
-      ? specialty.split(",").map((d) => d.trim())
-      : [];
+        const specialities = specialty
+            ? specialty.split(",").map((d) => d.trim())
+            : [];
 
-    const today = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(today.getDate() + 1);
+        const today = new Date();
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
 
-    const formattedToday = today.toISOString().split("T")[0];
-    const formattedTomorrow = tomorrow.toISOString().split("T")[0];
+        const formattedToday = today.toISOString().split("T")[0];
+        const formattedTomorrow = tomorrow.toISOString().split("T")[0];
 
-    const whereConditions = {};
-    if (doctorName) whereConditions.name = { [Op.like]: `%${doctorName}%` };
-    if (gender) whereConditions.gender = gender;
-    if (specialities.length > 0)
-      whereConditions.specialty = { [Op.in]: specialities };
+        const whereConditions = {};
+        if (doctorName) whereConditions.name = { [Op.like]: `%${doctorName}%` };
+        if (gender) whereConditions.gender = gender;
+        if (specialities.length > 0)
+            whereConditions.specialty = { [Op.in]: specialities };
 
-    if (availableDays.length > 0) {
-      const jsonConditions = availableDays.map((day) => {
-        const formattedDate =
-          day === "tomorrow" ? formattedTomorrow : formattedToday;
-        return Sequelize.where(
-          Sequelize.fn(
-            "JSON_SEARCH",
-            Sequelize.col("available_slots"),
-            "one",
-            formattedDate
-          ),
-          { [Op.not]: null }
-        );
-      });
-      whereConditions[Op.or] = jsonConditions;
+        if (availableDays.length > 0) {
+            const jsonConditions = availableDays.map((day) => {
+                const formattedDate =
+                    day === "tomorrow" ? formattedTomorrow : formattedToday;
+                return Sequelize.where(
+                    Sequelize.fn(
+                        "JSON_SEARCH",
+                        Sequelize.col("available_slots"),
+                        "one",
+                        formattedDate
+                    ),
+                    { [Op.not]: null }
+                );
+            });
+            whereConditions[Op.or] = jsonConditions;
+        }
+
+        let order = [];
+        if (sort === "price_asc") order = [["price", "ASC"]];
+        else if (sort === "price_desc") order = [["price", "DESC"]];
+        else if (sort === "recommend") order = [["rate", "DESC"]];
+
+        const { rows: doctors, count } = await DoctorModel.findAndCountAll({
+            attributes: [
+                "id",
+                "name",
+                "specialty",
+                "start_time",
+                "end_time",
+                "price",
+                "image",
+                "rate",
+                "address",
+                "gender",
+                "available_slots",
+            ],
+            where: {
+                ...whereConditions,
+                ...(sort === "recommend" && { rate: { [Op.gte]: 3 } }),
+            },
+            order,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        });
+
+        const formattedDoctors = await attachFavourites(doctors, req.user?.id);
+
+        res.status(200).json({
+            message: "Doctors fetched successfully",
+            count,
+            doctors: formattedDoctors,
+        });
+    } catch (error) {
+        console.error("Get Doctors Error:", error);
+        res.status(500).json({
+            message: "Failed to fetch doctors",
+            error: error.message,
+        });
     }
-
-    let order = [];
-    if (sort === "price_asc") order = [["price", "ASC"]];
-    else if (sort === "price_desc") order = [["price", "DESC"]];
-    else if (sort === "recommend") order = [["rate", "DESC"]];
-
-    const { rows: doctors, count } = await DoctorModel.findAndCountAll({
-      attributes: [
-        "id",
-        "name",
-        "specialty",
-        "start_time",
-        "end_time",
-        "price",
-        "image",
-        "rate",
-        "address",
-        "gender",
-        "available_slots",
-      ],
-      where: {
-        ...whereConditions,
-        ...(sort === "recommend" && { rate: { [Op.gte]: 3 } }),
-      },
-      order,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-    });
-
-    const formattedDoctors = await attachFavourites(doctors, req.user?.id);
-
-    res.status(200).json({
-      message: "Doctors fetched successfully",
-      count,
-      doctors: formattedDoctors,
-    });
-  } catch (error) {
-    console.error("Get Doctors Error:", error);
-    res.status(500).json({
-      message: "Failed to fetch doctors",
-      error: error.message,
-    });
-  }
 };
 
 export const getDoctorById = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    const doctor = await DoctorModel.findOne({
-      where: { id },
-      include: [
-        {
-          model: ReviewModel,
-          as: "reviews",
-          attributes: ["id", "rate", "comment", "created_at"],
-          include: [
-            {
-              model: UserModel,
-              as: "user",
-              attributes: ["fullname", "image"],
-            },
-          ],
-        },
-      ],
-    });
+        const doctor = await DoctorModel.findOne({
+            where: { id },
+            include: [
+                {
+                    model: ReviewModel,
+                    as: "reviews",
+                    attributes: [
+                        "id",
+                        "rate",
+                        "comment",
+                        "created_at",
+                        "updated_at",
+                    ],
+                    include: [
+                        {
+                            model: UserModel,
+                            as: "user",
+                            attributes: ["fullname", "image", "id"],
+                        },
+                    ],
+                },
+            ],
+        });
 
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+        if (!doctor)
+            return res.status(404).json({ message: "Doctor not found" });
 
-    const formattedDoctorArray = await attachFavourites([doctor], req.user?.id);
-    const formattedDoctor = {
-      ...formattedDoctorArray[0],
-      reviews: doctor.reviews,
-    };
+        const formattedDoctorArray = await attachFavourites(
+            [doctor],
+            req.user?.id
+        );
+        const formattedDoctor = {
+            ...formattedDoctorArray[0],
+            reviews: doctor.reviews,
+        };
 
-    res.status(200).json({
-      message: "Doctor fetched successfully",
-      doctor: formattedDoctor,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch doctor",
-      error: error.message,
-    });
-  }
+        res.status(200).json({
+            message: "Doctor fetched successfully",
+            doctor: formattedDoctor,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch doctor",
+            error: error.message,
+        });
+    }
 };
 
 export const getTopRatedDoctors = async (req, res) => {
-  try {
-    const doctors = await DoctorModel.findAll({
-      where: { rate: { [Op.gte]: 3 } },
-      attributes: [
-        "id",
-        "name",
-        "specialty",
-        "start_time",
-        "end_time",
-        "price",
-        "image",
-        "rate",
-        "address",
-      ],
-    });
+    try {
+        const doctors = await DoctorModel.findAll({
+            where: { rate: { [Op.gte]: 3 } },
+            attributes: [
+                "id",
+                "name",
+                "specialty",
+                "start_time",
+                "end_time",
+                "price",
+                "image",
+                "rate",
+                "address",
+            ],
+        });
 
-    if (!doctors || doctors.length === 0) {
-      return res.status(200).json({
-        message: "No doctors found with rate >= 3",
-        doctors: [],
-      });
+        if (!doctors || doctors.length === 0) {
+            return res.status(200).json({
+                message: "No doctors found with rate >= 3",
+                doctors: [],
+            });
+        }
+
+        const formattedDoctors = await attachFavourites(doctors, req.user?.id);
+
+        res.status(200).json({
+            message: "Doctors fetched successfully",
+            doctors: formattedDoctors,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch doctors",
+            error: error.message,
+        });
     }
-
-    const formattedDoctors = await attachFavourites(doctors, req.user?.id);
-
-    res.status(200).json({
-      message: "Doctors fetched successfully",
-      doctors: formattedDoctors,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch doctors",
-      error: error.message,
-    });
-  }
 };
